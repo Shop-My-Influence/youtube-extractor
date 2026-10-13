@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SMI — Extraction Créateurs YouTube</title>
+<link href="https://fonts.googleapis.com/css2?family=Karla:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--indigo:#7B59F5;--orange:#FF7131;--dark:#0D142C;--lila:#CFC2F7;--violet:#B81CCB;--green:#48D0AE;--red:#FC4C4C;--yellow:#FFCE53}
+body{font-family:'Karla',sans-serif;background:var(--dark);color:#fff;min-height:100vh;display:flex;flex-direction:column}
+.topbar{background:rgba(13,20,44,0.98);border-bottom:1px solid rgba(123,89,245,0.2);padding:12px 24px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:100;flex-shrink:0}
+.logo{background:linear-gradient(135deg,var(--indigo),var(--violet));border-radius:8px;padding:6px 12px;font-size:12px;font-weight:800}
+.topbar-title{font-size:14px;font-weight:700}
+.topbar-sub{font-size:11px;color:var(--lila);margin-top:1px}
+.quota{margin-left:auto;font-size:11px;color:rgba(255,255,255,0.35);background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:3px 11px}
+.layout{display:grid;grid-template-columns:280px 1fr;flex:1;overflow:hidden}
+.sidebar{background:rgba(255,255,255,0.03);border-right:1px solid rgba(123,89,245,0.15);padding:16px 14px;overflow-y:auto}
+.sec-label{font-size:9px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--indigo);margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid rgba(123,89,245,0.2)}
+.field{margin-bottom:10px}
+label{display:block;font-size:9px;font-weight:700;color:rgba(255,255,255,0.4);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.5px}
+input[type="password"],select{width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(123,89,245,0.25);border-radius:6px;padding:7px 10px;color:#fff;font-family:'Karla',sans-serif;font-size:12px;outline:none;transition:border-color 0.2s;-webkit-appearance:none}
+input:focus,select:focus{border-color:var(--indigo);background:rgba(123,89,245,0.08)}
+input::placeholder{color:rgba(255,255,255,0.2)}
+select option{background:#1a2245;color:#fff}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.sep{height:1px;background:rgba(255,255,255,0.06);margin:12px 0}
+
+/* CATÉGORIES */
+.cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:8px}
+.cat-btn{padding:6px 8px;border-radius:7px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.5);font-family:'Karla',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all 0.15s;text-align:left;display:flex;align-items:center;gap:5px}
+.cat-btn:hover{background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.8)}
+.cat-btn.active{border-color:var(--indigo);background:rgba(123,89,245,0.18);color:#fff}
+.cat-btn .cat-icon{font-size:13px;flex-shrink:0}
+.cat-btn .cat-name{font-size:10px;font-weight:700}
+
+.cat-actions{display:flex;gap:5px;margin-bottom:10px}
+.btn-cat-action{flex:1;padding:5px;background:transparent;border:1px solid rgba(123,89,245,0.25);border-radius:6px;color:var(--lila);font-family:'Karla',sans-serif;font-size:10px;font-weight:700;cursor:pointer;transition:background 0.15s}
+.btn-cat-action:hover{background:rgba(123,89,245,0.12)}
+
+.selected-count{font-size:10px;color:var(--orange);font-weight:700;margin-bottom:8px;display:none}
+
+/* MODE PAYS */
+.mode-row{display:flex;gap:4px;margin-top:4px}
+.mode-btn{flex:1;padding:5px 3px;border-radius:5px;border:1px solid rgba(123,89,245,0.2);background:transparent;color:rgba(255,255,255,0.35);font-family:'Karla',sans-serif;font-size:10px;font-weight:700;cursor:pointer;transition:all 0.15s;text-align:center}
+.mode-btn.active{background:rgba(123,89,245,0.2);border-color:var(--indigo);color:var(--lila)}
+
+.btn-main{width:100%;padding:11px;background:linear-gradient(135deg,var(--indigo),var(--violet));border:none;border-radius:9px;color:#fff;font-family:'Karla',sans-serif;font-size:13px;font-weight:800;cursor:pointer;transition:opacity 0.2s;margin-top:6px}
+.btn-main:hover{opacity:0.9}
+.btn-main:disabled{opacity:0.35;cursor:not-allowed}
+.btn-save{width:100%;padding:6px;background:transparent;border:1px solid rgba(123,89,245,0.3);border-radius:6px;color:var(--lila);font-family:'Karla',sans-serif;font-size:10px;font-weight:600;cursor:pointer;margin-top:4px;transition:background 0.2s}
+.btn-save:hover{background:rgba(123,89,245,0.1)}
+
+/* MAIN */
+.main{padding:20px 24px;overflow-y:auto}
+.progress-wrap{margin-bottom:14px;display:none}
+.progress-label{font-size:11px;color:var(--lila);margin-bottom:5px;font-weight:600}
+.progress-bar{height:5px;background:rgba(123,89,245,0.15);border-radius:10px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--indigo),var(--violet));border-radius:10px;transition:width 0.3s ease;width:0%}
+
+.status{display:none;align-items:center;gap:8px;padding:10px 14px;border-radius:8px;margin-bottom:14px;font-size:12px;font-weight:600}
+.status.loading{display:flex;background:rgba(123,89,245,0.1);border:1px solid rgba(123,89,245,0.25);color:var(--lila)}
+.status.success{display:flex;background:rgba(72,208,174,0.1);border:1px solid rgba(72,208,174,0.25);color:var(--green)}
+.status.error{display:flex;background:rgba(252,76,76,0.1);border:1px solid rgba(252,76,76,0.25);color:var(--red)}
+.spinner{width:13px;height:13px;flex-shrink:0;border:2px solid rgba(123,89,245,0.3);border-top-color:var(--indigo);border-radius:50%;animation:spin 0.7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.empty{text-align:center;padding:60px 20px;color:rgba(255,255,255,0.2)}
+.empty-icon{font-size:44px;margin-bottom:12px}
+.empty-title{font-size:16px;font-weight:700;color:rgba(255,255,255,0.3);margin-bottom:6px}
+.empty-sub{font-size:12px;line-height:1.7}
+
+/* RÉSULTATS */
+.results-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+.results-meta{display:flex;align-items:baseline;gap:8px}
+.results-count{font-size:24px;font-weight:800;color:var(--indigo)}
+.results-label{font-size:11px;color:rgba(255,255,255,0.35)}
+.results-actions{display:flex;gap:6px}
+.btn-action{padding:6px 12px;border-radius:6px;font-family:'Karla',sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all 0.15s;border:none}
+.btn-csv{background:rgba(255,113,49,0.15);border:1px solid rgba(255,113,49,0.35);color:var(--orange)}
+.btn-csv:hover{background:rgba(255,113,49,0.25)}
+.btn-clear{background:rgba(252,76,76,0.08);border:1px solid rgba(252,76,76,0.2);color:rgba(252,76,76,0.6)}
+.btn-clear:hover{background:rgba(252,76,76,0.18)}
+
+/* FILTRE PAR CAT */
+.cat-filter-bar{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px}
+.cf-btn{padding:4px 10px;border-radius:20px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.4);font-family:'Karla',sans-serif;font-size:10px;font-weight:700;cursor:pointer;transition:all 0.15s}
+.cf-btn:hover{background:rgba(255,255,255,0.08)}
+.cf-btn.active{background:rgba(123,89,245,0.2);border-color:var(--indigo);color:var(--lila)}
+.cf-btn.all{border-color:var(--orange);color:var(--orange);background:rgba(255,113,49,0.08)}
+.cf-btn.all.active{background:rgba(255,113,49,0.2)}
+
+.table-wrap{overflow-x:auto;border-radius:10px;border:1px solid rgba(123,89,245,0.15)}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead tr{background:rgba(123,89,245,0.08)}
+thead th{padding:9px 12px;text-align:left;font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:rgba(123,89,245,0.75);cursor:pointer;user-select:none;white-space:nowrap;border-bottom:1px solid rgba(123,89,245,0.15)}
+thead th:hover{color:var(--lila)}
+thead th.active{color:var(--orange)}
+tbody tr{border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.1s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:rgba(123,89,245,0.04)}
+tbody td{padding:10px 12px;vertical-align:middle}
+
+.ch-name{font-weight:700;font-size:12px}
+.ch-desc{font-size:10px;color:rgba(255,255,255,0.3);margin-top:2px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pill{display:inline-block;padding:2px 8px;border-radius:20px;font-weight:700;font-size:10px;white-space:nowrap}
+.pill-indigo{background:rgba(123,89,245,0.15);color:var(--lila)}
+.pill-orange{background:rgba(255,113,49,0.15);color:var(--orange)}
+.pill-green{background:rgba(72,208,174,0.15);color:var(--green)}
+.cat-tag{display:inline-block;padding:2px 7px;border-radius:20px;font-size:9px;font-weight:800;white-space:nowrap;margin:1px}
+.flag-pill{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700}
+.flag-match{background:rgba(72,208,174,0.15);color:var(--green);border:1px solid rgba(72,208,174,0.2)}
+.flag-no-data{background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.3);border:1px solid rgba(255,255,255,0.1)}
+.flag-other{background:rgba(255,113,49,0.1);color:rgba(255,113,49,0.6);border:1px solid rgba(255,113,49,0.15)}
+.link-yt{display:inline-flex;align-items:center;padding:3px 9px;background:rgba(255,0,0,0.1);border:1px solid rgba(255,0,0,0.2);border-radius:5px;color:#ff6b6b;text-decoration:none;font-size:10px;font-weight:700;transition:background 0.15s}
+.link-yt:hover{background:rgba(255,0,0,0.2)}
+.sort-arr{opacity:0.3;margin-left:2px;font-size:8px}
+.active .sort-arr{opacity:1;color:var(--orange)}
+.toast{position:fixed;bottom:18px;right:18px;background:var(--green);color:var(--dark);padding:8px 14px;border-radius:7px;font-weight:700;font-size:11px;opacity:0;transform:translateY(8px);transition:all 0.3s;pointer-events:none;z-index:999}
+.toast.show{opacity:1;transform:translateY(0)}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="logo">SMI</div>
+  <div>
+    <div class="topbar-title">Extraction Créateurs YouTube</div>
+    <div class="topbar-sub">16 catégories SMI · multi-sélection · jusqu'à 250 chaînes/catégorie</div>
+  </div>
+  <div class="quota" id="quotaDisplay">Quota : ~100 unités / page</div>
+</div>
+
+<div class="layout">
+  <div class="sidebar">
+
+    <div class="sec-label">Clé API YouTube</div>
+    <div class="field">
+      <label>Clé Google API</label>
+      <input type="password" id="apiKey" placeholder="AIzaSy..."/>
+      <button class="btn-save" onclick="saveKey()">✓ Mémoriser</button>
+    </div>
+
+    <div class="sep"></div>
+    <div class="sec-label">Catégories SMI</div>
+    <div class="cat-actions">
+      <button class="btn-cat-action" onclick="selectAll()">Tout cocher</button>
+      <button class="btn-cat-action" onclick="clearAll()">Tout décocher</button>
+    </div>
+    <div class="selected-count" id="selectedCount"></div>
+    <div class="cat-grid" id="catGrid"></div>
+
+    <div class="sep"></div>
+    <div class="sec-label">Paramètres</div>
+
+    <div class="field">
+      <label>Langue</label>
+      <select id="language">
+        <option value="">Toutes</option>
+        <option value="fr">Français</option>
+        <option value="nl">Néerlandais</option>
+        <option value="es">Espagnol</option>
+        <option value="it">Italien</option>
+        <option value="de">Allemand</option>
+        <option value="en">Anglais</option>
+        <option value="pt">Portugais</option>
+        <option value="pl">Polonais</option>
+        <option value="ro">Roumain</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Pages par catégorie</label>
+      <select id="nbPages">
+        <option value="1">1 page → ~50 ch.</option>
+        <option value="2">2 pages → ~100 ch.</option>
+        <option value="3" selected>3 pages → ~150 ch.</option>
+        <option value="5">5 pages → ~250 ch.</option>
+      </select>
+    </div>
+
+    <div class="sep"></div>
+    <div class="sec-label">Filtres résultats</div>
+
+    <div class="field">
+      <label>Pays déclaré</label>
+      <select id="region">
+        <option value="">Tous les pays</option>
+        <option value="NL">🇳🇱 Pays-Bas</option>
+        <option value="FR">🇫🇷 France</option>
+        <option value="ES">🇪🇸 Espagne</option>
+        <option value="IT">🇮🇹 Italie</option>
+        <option value="DE">🇩🇪 Allemagne</option>
+        <option value="GB">🇬🇧 Royaume-Uni</option>
+        <option value="BE">🇧🇪 Belgique</option>
+        <option value="CH">🇨🇭 Suisse</option>
+        <option value="PL">🇵🇱 Pologne</option>
+        <option value="RO">🇷🇴 Roumanie</option>
+        <option value="US">🇺🇸 États-Unis</option>
+        <option value="BR">🇧🇷 Brésil</option>
+        <option value="CA">🇨🇦 Canada</option>
+        <option value="PT">🇵🇹 Portugal</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <div class="mode-row">
+        <button class="mode-btn" id="mode-strict" onclick="setMode('strict')">Strict</button>
+        <button class="mode-btn active" id="mode-souple" onclick="setMode('souple')">Souple</button>
+        <button class="mode-btn" id="mode-tous" onclick="setMode('tous')">Tous</button>
+      </div>
+      <div style="font-size:9px;color:rgba(255,255,255,0.3);margin-top:4px" id="modeInfo">Souple : pays cible + sans pays déclaré</div>
+    </div>
+
+    <div class="row2">
+      <div class="field">
+        <label>Abonn. min.</label>
+        <select id="minSubs">
+          <option value="0">Aucun</option>
+          <option value="1000">1 000</option>
+          <option value="5000" selected>5 000</option>
+          <option value="10000">10 000</option>
+          <option value="50000">50 000</option>
+          <option value="100000">100 000</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Abonn. max.</label>
+        <select id="maxSubs">
+          <option value="10000">10 000</option>
+          <option value="50000">50 000</option>
+          <option value="100000">100 000</option>
+          <option value="500000" selected>500 000</option>
+          <option value="1000000">1 M</option>
+          <option value="999999999">Illimité</option>
+        </select>
+      </div>
+    </div>
+
+    <button class="btn-main" id="btnSearch" onclick="launchSearch()">🔍 Lancer la recherche</button>
+  </div>
+
+  <div class="main">
+    <div class="progress-wrap" id="progressWrap">
+      <div class="progress-label" id="progressLabel">Chargement…</div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+    <div class="status" id="statusBar">
+      <div class="spinner" id="spinner" style="display:none"></div>
+      <span id="statusText"></span>
+    </div>
+    <div class="empty" id="emptyState">
+      <div class="empty-icon">🎯</div>
+      <div class="empty-title">Sélectionne tes catégories et lance</div>
+      <div class="empty-sub">Coche une ou plusieurs catégories SMI à gauche.<br>Tu peux combiner Mode + Beauté + Sport en une seule recherche.<br>Les résultats s'accumulent — exporte quand tu veux.</div>
+    </div>
+    <div id="resultsSection" style="display:none">
+      <div class="results-top">
+        <div class="results-meta">
+          <div class="results-count" id="countDisplay">0</div>
+          <div class="results-label">créateurs</div>
+        </div>
+        <div class="results-actions">
+          <button class="btn-action btn-clear" onclick="clearResults()">✕ Vider</button>
+          <button class="btn-action btn-csv" onclick="exportCSV()">⬇ Exporter CSV</button>
+        </div>
+      </div>
+      <div class="cat-filter-bar" id="catFilterBar"></div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th onclick="sortBy('title')">Chaîne <span class="sort-arr">↕</span></th>
+              <th onclick="sortBy('subscribers')" id="th-sub" class="active">Abonnés <span class="sort-arr">↓</span></th>
+              <th onclick="sortBy('views')">Vues <span class="sort-arr">↕</span></th>
+              <th onclick="sortBy('videos')">Vidéos <span class="sort-arr">↕</span></th>
+              <th>Catégories</th>
+              <th onclick="sortBy('email')">Email <span class="sort-arr">↕</span></th>
+              <th>Pays</th>
+              <th>Lien</th>
+            </tr>
+          </thead>
+          <tbody id="resultsBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">✓ Clé mémorisée</div>
+
+<script>
+// ─── DONNÉES CATÉGORIES SMI ────────────────────────────────────
+const CATEGORIES = [
+  { id:'mode',        label:'Mode',            icon:'👗',  color:'#7B59F5',
+    kw:{ fr:['mode','lookbook','outfit du jour','haul mode','tendances mode'], nl:['mode','kleding','outfit','fashion haul','stijl'], en:['fashion','outfit','clothing haul','lookbook','ootd'], es:['moda','ropa','outfit','looks'], it:['moda','abbigliamento','outfit'], de:['mode','kleidung','outfit'], pt:['moda','roupa','outfit'], pl:['moda','ubrania','outfit'], ro:['moda','tinute','outfit'], '':['fashion','mode','outfit','clothing'] }},
+  { id:'beaute',      label:'Beauté',          icon:'💄',  color:'#B81CCB',
+    kw:{ fr:['maquillage','beauté','skincare','routine beauté','tutoriel make-up'], nl:['make-up','beauty','huidverzorging','beauty routine','schoonheid'], en:['makeup tutorial','beauty','skincare routine','cosmetics'], es:['maquillaje','belleza','skincare','rutina belleza'], it:['trucco','bellezza','skincare'], de:['makeup','beauty','hautpflege'], pt:['maquiagem','beleza','skincare'], pl:['makijaż','uroda','skincare'], ro:['machiaj','frumusete','skincare'], '':['beauty','makeup','skincare'] }},
+  { id:'lifestyle',   label:'Lifestyle',       icon:'✨',  color:'#FF7131',
+    kw:{ fr:['lifestyle','vlog','routine quotidienne','day in my life','semaine dans ma vie'], nl:['lifestyle','vlog','dag in mijn leven','dagelijkse routine'], en:['lifestyle','daily vlog','day in my life','routine','week in my life'], es:['lifestyle','vlog diario','rutina diaria'], it:['lifestyle','vlog quotidiano','vita quotidiana'], de:['lifestyle','vlog','alltag'], pt:['lifestyle','vlog diário','rotina'], pl:['lifestyle','vlog','codzienność'], ro:['lifestyle','vlog','rutina zilnica'], '':['lifestyle','vlog','daily vlog'] }},
+  { id:'maison',      label:'Maison',          icon:'🏠',  color:'#4FC1E9',
+    kw:{ fr:['décoration intérieure','maison','home tour','aménagement','deco maison'], nl:['interieur','woondecoratie','home tour','thuisdecor','wonen'], en:['home decor','interior design','home tour','room makeover','decoration'], es:['decoración hogar','interiores','home tour'], it:['arredamento','decorazione casa','home tour'], de:['wohnungseinrichtung','inneneinrichtung','home tour'], pt:['decoração casa','interiores','home tour'], pl:['wystrój wnętrz','dekoracja domu','home tour'], ro:['decoratiuni interioare','casa','home tour'], '':['home decor','interior design','home tour'] }},
+  { id:'famille',     label:'Famille',         icon:'👨‍👩‍👧', color:'#FFCE53',
+    kw:{ fr:['famille','vlog famille','parentalité','maman vlog','bébé','enfants'], nl:['familie','gezin','ouderschap','mama vlog','baby','kinderen'], en:['family vlog','parenting','mom vlog','family life','baby','kids'], es:['familia','vlog familia','maternidad','mama vlog'], it:['famiglia','vlog famiglia','genitori','mamma vlog'], de:['familie','familienvlog','erziehung','mama vlog'], pt:['família','vlog família','maternidade'], pl:['rodzina','vlog rodzinny','wychowanie','mama vlog'], ro:['familie','vlog familie','parenting'], '':['family vlog','parenting','mom vlog'] }},
+  { id:'animaux',     label:'Animaux',         icon:'🐾',  color:'#48D0AE',
+    kw:{ fr:['animaux','chien','chat','animaux de compagnie','vétérinaire'], nl:['huisdieren','hond','kat','dieren','dierenoppas'], en:['pets','dogs','cats','animals','pet care','puppy','kitten'], es:['mascotas','perros','gatos','animales'], it:['animali','cane','gatto','animali domestici'], de:['haustiere','hund','katze','tiere'], pt:['animais','cão','gato'], pl:['zwierzęta','pies','kot','zwierzęta domowe'], ro:['animale','câine','pisică'], '':['pets','dogs','cats','animals'] }},
+  { id:'sante',       label:'Santé',           icon:'🏥',  color:'#48D0AE',
+    kw:{ fr:['santé','bien-être','nutrition','santé mentale','médecine'], nl:['gezondheid','welzijn','voeding','mentale gezondheid','gezond'], en:['health','wellness','nutrition','mental health','wellbeing'], es:['salud','bienestar','nutrición','salud mental'], it:['salute','benessere','nutrizione'], de:['gesundheit','wohlbefinden','ernährung'], pt:['saúde','bem-estar','nutrição'], pl:['zdrowie','wellness','żywienie'], ro:['sanatate','wellness','nutritie'], '':['health','wellness','nutrition'] }},
+  { id:'bonsplans',   label:'Bons Plans',      icon:'🏷️',  color:'#FFCE53',
+    kw:{ fr:['bons plans','haul','shopping','économies','promotions'], nl:['koopjes','haul','shopping tips','aanbiedingen','deals'], en:['deals','haul','shopping','savings','discount','budget'], es:['ofertas','haul','shopping','descuentos'], it:['offerte','haul','shopping','sconti'], de:['schnäppchen','haul','shopping','angebote'], pt:['promoções','haul','shopping','poupança'], pl:['okazje','haul','zakupy','oszczędności'], ro:['oferte','haul','shopping'], '':['deals','haul','shopping','discount'] }},
+  { id:'eco',         label:'Éco-Responsable', icon:'🌿',  color:'#48D0AE',
+    kw:{ fr:['éco-responsable','bio','zéro déchet','vegan','durable','écologie'], nl:['duurzaam','eco','zero waste','vegan','biologisch','milieu'], en:['eco','sustainable','zero waste','vegan','green living','organic'], es:['ecológico','sostenible','zero waste','vegano'], it:['eco','sostenibile','zero sprechi','vegano'], de:['nachhaltig','öko','zero waste','vegan'], pt:['ecológico','sustentável','zero desperdício'], pl:['ekologia','zero waste','vegan','zrównoważony'], ro:['eco','sustenabil','zero deseuri'], '':['eco','sustainable','vegan','zero waste'] }},
+  { id:'sport',       label:'Sport',           icon:'💪',  color:'#FF7131',
+    kw:{ fr:['sport','fitness','musculation','entraînement','running','CrossFit'], nl:['sport','fitness','training','hardlopen','gym','workout'], en:['sport','fitness','workout','gym','training','running','exercise'], es:['deporte','fitness','entrenamiento','gimnasio','running'], it:['sport','fitness','allenamento','palestra'], de:['sport','fitness','training','workout','gym'], pt:['desporto','fitness','treino','academia'], pl:['sport','fitness','trening','siłownia'], ro:['sport','fitness','antrenament'], '':['sport','fitness','workout','gym'] }},
+  { id:'blog',        label:'Blog',            icon:'📝',  color:'#CFC2F7',
+    kw:{ fr:['vlog','blog','daily vlog','vie de créateur'], nl:['vlog','dagboek','dagelijks vlog','creator life'], en:['vlog','daily vlog','creator life','week in my life'], es:['vlog diario','vida de creador'], it:['vlog quotidiano','vita da creator'], de:['daily vlog','alltag vlog','creator life'], pt:['vlog diário','vida de criador'], pl:['vlog','codzienność vlog'], ro:['vlog zilnic'], '':['vlog','daily vlog','creator life'] }},
+  { id:'culture',     label:'Culture',         icon:'🎭',  color:'#7B59F5',
+    kw:{ fr:['culture','livres','cinéma','musique','art','critique film'], nl:['cultuur','boeken','film','muziek','kunst'], en:['culture','books','cinema','music','art','book review','film review'], es:['cultura','libros','cine','música','arte'], it:['cultura','libri','cinema','musica','arte'], de:['kultur','bücher','kino','musik','kunst'], pt:['cultura','livros','cinema','música'], pl:['kultura','książki','kino','muzyka'], ro:['cultura','carti','cinema','muzica'], '':['culture','books','music','art'] }},
+  { id:'hightech',    label:'High-Tech',       icon:'📱',  color:'#4FC1E9',
+    kw:{ fr:['high-tech','technologie','smartphone','gadgets','unboxing','test produit'], nl:['technologie','gadgets','smartphone','tech review','unboxing'], en:['tech','technology','gadgets','smartphone','review','unboxing'], es:['tecnología','gadgets','smartphone','unboxing'], it:['tecnologia','gadget','smartphone','unboxing'], de:['technologie','gadgets','smartphone','unboxing'], pt:['tecnologia','gadgets','smartphone','unboxing'], pl:['technologia','gadżety','smartfon','unboxing'], ro:['tehnologie','gadgeturi','smartphone'], '':['tech','gadgets','unboxing','review'] }},
+  { id:'gaming',      label:'Gaming',          icon:'🎮',  color:'#B81CCB',
+    kw:{ fr:['gaming','jeux vidéo','stream','let\'s play','esport'], nl:['gaming','games','stream','let\'s play','esports'], en:['gaming','games','gamer','let\'s play','stream','esports','gameplay'], es:['gaming','videojuegos','stream','esports'], it:['gaming','videogiochi','stream','esports'], de:['gaming','spiele','stream','esports','gamer'], pt:['gaming','jogos','stream','esports'], pl:['gaming','gry','stream','esport'], ro:['gaming','jocuri','stream'], '':['gaming','games','stream','esports'] }},
+  { id:'food',        label:'Food',            icon:'🍽️',  color:'#FF7131',
+    kw:{ fr:['food','cuisine','recettes','chef','pâtisserie','gastronomie'], nl:['eten','koken','recepten','bakken','food vlog','restaurant'], en:['food','cooking','recipes','chef','baking','foodie','restaurant'], es:['comida','cocina','recetas','chef','repostería'], it:['cibo','cucina','ricette','chef','pasticceria'], de:['essen','kochen','rezepte','backen','foodie'], pt:['comida','cozinha','receitas','chef'], pl:['jedzenie','gotowanie','przepisy','pieczenie'], ro:['mancare','gatit','retete'], '':['food','cooking','recipes','chef'] }},
+  { id:'entertainment',label:'Entertainment',  icon:'🎬',  color:'#FC4C4C',
+    kw:{ fr:['divertissement','comédie','humour','challenge','sketch'], nl:['entertainment','komedie','humor','challenge','comedy'], en:['entertainment','comedy','humor','challenge','prank','funny'], es:['entretenimiento','comedia','humor','challenge'], it:['intrattenimento','commedia','humor','challenge'], de:['unterhaltung','komödie','humor','challenge'], pt:['entretenimento','comédia','humor','desafio'], pl:['rozrywka','komedia','humor','challenge'], ro:['divertisment','comedie','umor'], '':['entertainment','comedy','challenge','funny'] }}
+];
+
+// ─── ÉTAT ─────────────────────────────────────────────────────
+let allResults   = [];
+let sortField    = 'subscribers';
+let sortDir      = 'desc';
+let filterMode   = 'souple';
+let activeCatFilter = 'all';
+let selectedCats = new Set();
+
+const countryNames = {FR:'France',ES:'Espagne',IT:'Italie',DE:'Allemagne',GB:'Royaume-Uni',BE:'Belgique',CH:'Suisse',NL:'Pays-Bas',PL:'Pologne',RO:'Roumanie',US:'États-Unis',BR:'Brésil',MX:'Mexique',CA:'Canada',PT:'Portugal'};
+const countryFlags = {FR:'🇫🇷',ES:'🇪🇸',IT:'🇮🇹',DE:'🇩🇪',GB:'🇬🇧',BE:'🇧🇪',CH:'🇨🇭',NL:'🇳🇱',PL:'🇵🇱',RO:'🇷🇴',US:'🇺🇸',BR:'🇧🇷',MX:'🇲🇽',CA:'🇨🇦',PT:'🇵🇹',AU:'🇦🇺',JP:'🇯🇵'};
+const modeTexts = { strict:'Strict : pays déclaré = pays cible uniquement', souple:'Souple : pays cible + sans pays déclaré', tous:'Tous : tous les résultats affichés' };
+
+// ─── INIT ──────────────────────────────────────────────────────
+window.onload = () => {
+  const k = localStorage.getItem('smi_yt_key');
+  if (k) document.getElementById('apiKey').value = k;
+  buildCatGrid();
+};
+
+function buildCatGrid() {
+  const grid = document.getElementById('catGrid');
+  grid.innerHTML = CATEGORIES.map(c => `
+    <button class="cat-btn" id="cat-${c.id}" onclick="toggleCat('${c.id}')" title="${c.label}">
+      <span class="cat-icon">${c.icon}</span>
+      <span class="cat-name">${c.label}</span>
+    </button>`).join('');
+}
+
+function toggleCat(id) {
+  if (selectedCats.has(id)) { selectedCats.delete(id); document.getElementById('cat-'+id).classList.remove('active'); }
+  else { selectedCats.add(id); document.getElementById('cat-'+id).classList.add('active'); }
+  updateSelectedCount();
+}
+
+function selectAll()  { CATEGORIES.forEach(c => { selectedCats.add(c.id); document.getElementById('cat-'+c.id).classList.add('active'); }); updateSelectedCount(); }
+function clearAll()   { selectedCats.clear(); document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active')); updateSelectedCount(); }
+
+function updateSelectedCount() {
+  const el = document.getElementById('selectedCount');
+  if (selectedCats.size === 0) { el.style.display='none'; return; }
+  el.style.display = 'block';
+  el.textContent = `${selectedCats.size} catégorie(s) sélectionnée(s)`;
+  const pages = parseInt(document.getElementById('nbPages').value)||3;
+  el.textContent += ` · ~${selectedCats.size * pages * 50} vidéos analysées`;
+}
+
+function setMode(m) {
+  filterMode = m;
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('mode-'+m).classList.add('active');
+  document.getElementById('modeInfo').textContent = modeTexts[m];
+  if (allResults.length) renderResults();
+}
+
+function saveKey() {
+  const k = document.getElementById('apiKey').value.trim();
+  if (!k) return;
+  localStorage.setItem('smi_yt_key', k);
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function showStatus(type, msg, spin=false) {
+  const bar = document.getElementById('statusBar');
+  bar.className = 'status '+type;
+  document.getElementById('statusText').textContent = msg;
+  document.getElementById('spinner').style.display = spin ? 'block' : 'none';
+}
+
+function setProgress(pct, label) {
+  document.getElementById('progressWrap').style.display = pct >= 100 ? 'none' : 'block';
+  document.getElementById('progressFill').style.width = pct+'%';
+  document.getElementById('progressLabel').textContent = label;
+}
+
+function extractEmail(text) {
+  if (!text) return '';
+  const m = text.match(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/);
+  return m ? m[0] : '';
+}
+
+function fmt(n) {
+  if (!n && n!==0) return '—';
+  n = parseInt(n);
+  if (n>=1000000) return (n/1000000).toFixed(1)+' M';
+  if (n>=1000) return (n/1000).toFixed(0)+' K';
+  return n.toLocaleString('fr-FR');
+}
+
+function pillSubs(s) {
+  s = parseInt(s||0);
+  if (s>=500000) return 'pill-green';
+  if (s>=100000) return 'pill-orange';
+  return 'pill-indigo';
+}
+
+function countryPill(c, target) {
+  if (!c) return `<span class="flag-pill flag-no-data">Non déclaré</span>`;
+  const f = countryFlags[c]||'';
+  const n = countryNames[c]||c;
+  return c===target ? `<span class="flag-pill flag-match">${f} ${n}</span>` : `<span class="flag-pill flag-other">${f} ${n}</span>`;
+}
+
+function catTag(catId) {
+  const cat = CATEGORIES.find(c => c.id===catId);
+  if (!cat) return '';
+  return `<span class="cat-tag" style="background:${cat.color}22;color:${cat.color};border:1px solid ${cat.color}44">${cat.icon} ${cat.label}</span>`;
+}
+
+// ─── RECHERCHE ─────────────────────────────────────────────────
+async function launchSearch() {
+  const apiKey  = document.getElementById('apiKey').value.trim();
+  const lang    = document.getElementById('language').value;
+  const nbPages = parseInt(document.getElementById('nbPages').value);
+
+  if (!apiKey) { showStatus('error','⚠ Colle ta clé API dans le champ à gauche.'); return; }
+  if (selectedCats.size === 0) { showStatus('error','⚠ Sélectionne au moins une catégorie.'); return; }
+
+  const catsToSearch = CATEGORIES.filter(c => selectedCats.has(c.id));
+  document.getElementById('btnSearch').disabled = true;
+  document.getElementById('emptyState').style.display = 'none';
+
+  let totalAdded = 0;
+  const totalSteps = catsToSearch.length;
+
+  for (let ci = 0; ci < catsToSearch.length; ci++) {
+    const cat = catsToSearch[ci];
+    const keywords = (cat.kw[lang] || cat.kw[''] || []).slice(0,3);
+    const basePct = Math.round((ci/totalSteps)*100);
+
+    setProgress(basePct+2, `Catégorie ${ci+1}/${totalSteps} : ${cat.icon} ${cat.label} — ${keywords.join(', ')}`);
+    showStatus('loading', `${cat.icon} ${cat.label} — Recherche en cours (${nbPages} page(s))…`, true);
+
+    try {
+      const channelIdSet = new Set();
+      let pageToken = '';
+
+      for (let page = 0; page < nbPages; page++) {
+        const pct = basePct + Math.round((page/nbPages)*((1/totalSteps)*80));
+        setProgress(pct, `${cat.icon} ${cat.label} · Page ${page+1}/${nbPages} · ${channelIdSet.size} chaînes…`);
+
+        const keyword = keywords[page % keywords.length];
+        let url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(keyword)}&type=video&maxResults=50&key=${apiKey}`;
+        if (lang) url += `&relevanceLanguage=${lang}`;
+        if (pageToken) url += `&pageToken=${pageToken}`;
+
+        const r = await fetch(url);
+        const d = await r.json();
+        if (d.error) throw new Error(d.error.message);
+
+        (d.items||[]).forEach(item => { if (item.snippet?.channelId) channelIdSet.add(item.snippet.channelId); });
+        pageToken = d.nextPageToken||'';
+        if (!pageToken && page < nbPages-1 && page < keywords.length-1) pageToken='';
+      }
+
+      // Stats par lots
+      const idsArray = [...channelIdSet];
+      for (let i=0; i<idsArray.length; i+=50) {
+        const ids = idsArray.slice(i,i+50).join(',');
+        const r = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=statistics,snippet&id=${ids}&key=${apiKey}`);
+        const d = await r.json();
+        if (d.error) throw new Error(d.error.message);
+
+        (d.items||[]).forEach(ch => {
+          const existing = allResults.find(x => x.id===ch.id);
+          if (existing) {
+            if (!existing._cats.includes(cat.id)) existing._cats.push(cat.id);
+          } else {
+            ch._cats = [cat.id];
+            allResults.push(ch);
+            totalAdded++;
+          }
+        });
+      }
+
+    } catch(err) {
+      showStatus('error', `❌ ${cat.label} : ${err.message}`);
+      document.getElementById('btnSearch').disabled = false;
+      return;
+    }
+  }
+
+  setProgress(100,'');
+  renderResults();
+  buildCatFilterBar();
+
+  const displayed = applyFilters(allResults).length;
+  showStatus('success', `✓ Recherche terminée — ${totalAdded} chaînes ajoutées — ${displayed} affichées avec tes filtres`);
+  document.getElementById('btnSearch').disabled = false;
+}
+
+// ─── FILTRES ───────────────────────────────────────────────────
+function applyFilters(data) {
+  const region  = document.getElementById('region').value;
+  const minSubs = parseInt(document.getElementById('minSubs').value);
+  const maxSubs = parseInt(document.getElementById('maxSubs').value);
+
+  return data.filter(ch => {
+    const s = parseInt(ch.statistics?.subscriberCount||0);
+    if (s<minSubs || s>maxSubs) return false;
+    if (activeCatFilter !== 'all' && !(ch._cats||[]).includes(activeCatFilter)) return false;
+    if (!region) return true;
+    if (filterMode==='strict') return ch.snippet?.country===region;
+    if (filterMode==='souple') return !ch.snippet?.country || ch.snippet?.country===region;
+    return true;
+  });
+}
+
+function buildCatFilterBar() {
+  const catsPresent = [...new Set(allResults.flatMap(c => c._cats||[]))];
+  const bar = document.getElementById('catFilterBar');
+  if (catsPresent.length <= 1) { bar.innerHTML=''; return; }
+
+  bar.innerHTML = `<button class="cf-btn all ${activeCatFilter==='all'?'active':''}" onclick="setCatFilter('all')">Toutes (${allResults.length})</button>` +
+    catsPresent.map(id => {
+      const cat = CATEGORIES.find(c=>c.id===id);
+      if (!cat) return '';
+      const count = allResults.filter(ch => (ch._cats||[]).includes(id)).length;
+      return `<button class="cf-btn ${activeCatFilter===id?'active':''}" onclick="setCatFilter('${id}')" style="border-color:${cat.color}55;color:${cat.color}">${cat.icon} ${cat.label} (${count})</button>`;
+    }).join('');
+}
+
+function setCatFilter(id) {
+  activeCatFilter = id;
+  buildCatFilterBar();
+  renderResults();
+}
+
+// ─── RENDU TABLE ───────────────────────────────────────────────
+function renderResults() {
+  const region   = document.getElementById('region').value;
+  const filtered = applyFilters(allResults);
+
+  if (filtered.length===0) {
+    document.getElementById('resultsSection').style.display='none';
+    document.getElementById('emptyState').style.display='block';
+    return;
+  }
+
+  document.getElementById('resultsSection').style.display='block';
+  document.getElementById('emptyState').style.display='none';
+  document.getElementById('countDisplay').textContent = filtered.length;
+
+  const sorted = [...filtered].sort((a,b) => {
+    if (sortField==='title') {
+      const va=(a.snippet?.title||'').toLowerCase(), vb=(b.snippet?.title||'').toLowerCase();
+      return sortDir==='asc' ? va.localeCompare(vb) : vb.localeCompare(va);
+    }
+    if (sortField==='email') {
+      const va=extractEmail(a.snippet?.description||''), vb=extractEmail(b.snippet?.description||'');
+      return sortDir==='asc' ? va.localeCompare(vb) : vb.localeCompare(va);
+    }
+    const keys = {subscribers:'subscriberCount',views:'viewCount',videos:'videoCount'};
+    const va=parseInt(a.statistics?.[keys[sortField]]||0), vb=parseInt(b.statistics?.[keys[sortField]]||0);
+    return sortDir==='asc' ? va-vb : vb-va;
+  });
+
+  document.getElementById('resultsBody').innerHTML = sorted.map(ch => {
+    const subs  = ch.statistics?.subscriberCount||0;
+    const views = ch.statistics?.viewCount||0;
+    const vids  = ch.statistics?.videoCount||0;
+    const title = ch.snippet?.title||'—';
+    const desc  = (ch.snippet?.description||'').replace(/\n/g,' ').substring(0,70);
+    const c     = ch.snippet?.country||null;
+    const cats  = (ch._cats||[]).map(catTag).join('');
+    const email = extractEmail(ch.snippet?.description||'');
+    const emailCell = email
+      ? `<a href="mailto:${email}" style="color:var(--green);font-size:11px;font-weight:600;text-decoration:none;white-space:nowrap" title="${email}">✉ ${email}</a>`
+      : `<span style="color:rgba(255,255,255,0.15);font-size:10px">—</span>`;
+
+    return `<tr>
+      <td><div class="ch-name">${title}</div><div class="ch-desc">${desc||'—'}</div></td>
+      <td><span class="pill ${pillSubs(subs)}">${fmt(subs)}</span></td>
+      <td><span class="pill pill-indigo">${fmt(views)}</span></td>
+      <td style="color:rgba(255,255,255,0.45)">${fmt(vids)}</td>
+      <td>${cats}</td>
+      <td>${emailCell}</td>
+      <td>${countryPill(c, region)}</td>
+      <td><a class="link-yt" href="https://youtube.com/channel/${ch.id}" target="_blank">▶</a></td>
+    </tr>`;
+  }).join('');
+}
+
+function sortBy(field) {
+  document.querySelectorAll('thead th').forEach(th=>th.classList.remove('active'));
+  sortDir = sortField===field ? (sortDir==='desc'?'asc':'desc') : 'desc';
+  sortField = field;
+  const map={title:'th-title',subscribers:'th-sub',views:'th-views',videos:'th-vids'};
+  if (document.getElementById(map[field])) document.getElementById(map[field]).classList.add('active');
+  renderResults();
+}
+
+function clearResults() {
+  allResults=[]; activeCatFilter='all';
+  document.getElementById('resultsSection').style.display='none';
+  document.getElementById('emptyState').style.display='block';
+  document.getElementById('statusBar').className='status';
+  document.getElementById('catFilterBar').innerHTML='';
+}
+
+// ─── EXPORT CSV ────────────────────────────────────────────────
+function exportCSV() {
+  const filtered = applyFilters(allResults);
+  const region   = document.getElementById('region').value;
+  if (!filtered.length) return;
+
+  const rows = [['Nom','Catégorie(s)','Abonnés','Vues','Vidéos','Email','Pays déclaré','Description','URL YouTube']];
+  filtered.forEach(ch => {
+    const catLabels = (ch._cats||[]).map(id => { const c=CATEGORIES.find(x=>x.id===id); return c?c.label:''; }).join(' | ');
+    const email = extractEmail(ch.snippet?.description||'');
+    rows.push([
+      `"${(ch.snippet?.title||'').replace(/"/g,'""')}"`,
+      `"${catLabels}"`,
+      ch.statistics?.subscriberCount||0,
+      ch.statistics?.viewCount||0,
+      ch.statistics?.videoCount||0,
+      email||'',
+      ch.snippet?.country||'Non déclaré',
+      `"${(ch.snippet?.description||'').replace(/\n/g,' ').replace(/"/g,'""').substring(0,300)}"`,
+      `https://youtube.com/channel/${ch.id}`
+    ]);
+  });
+
+  const csv  = '\uFEFF'+rows.map(r=>r.join(';')).join('\n');
+  const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href=url; a.download=`SMI_YouTube_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click(); URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>
